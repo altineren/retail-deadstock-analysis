@@ -3,8 +3,9 @@
 ## Cover Page
 - **Team Name:** StockShield AI  
 - **Team Members:**  
-  - Eren Altın (ID TBD) – Business & research lead  
-  - Codex Partner (Virtual) – AI & engineering lead  
+  - Eren Altın 
+  - Nurseyda Dogan
+  - Eda Acar
 - **Project Title:** Dead Stock Risk Radar – AI-Powered Inventory Intelligence  
 - **Date:** 03.12.2025  
 - **Course:** SE 390 01 – Artificial Intelligence Projects with Python  
