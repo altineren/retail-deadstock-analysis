@@ -1,0 +1,34 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam wrapWidth 200
+
+actor Planner as Planner
+
+package "Data Sources" {
+  [ERP/WMS] as ERP
+  [POS & Sales] as POS
+  [Marketing/Promo] as Marketing
+  [External Signals\n(Weather, Competitor Pricing)] as External
+}
+
+component "Ingestion Layer\n(Airflow/Prefect ETL)" as Ingestion
+component "Feature Engineering Jobs\n(Pandas/Spark)" as FeatureStore
+component "Model Training Pipeline\n(scikit-learn)" as Training
+component "Model Registry / Artifacts\n(S3 / MinIO)" as Registry
+component "Inference Service\n(FastAPI)" as Inference
+component "Streamlit UI\nDead Stock Risk Radar" as Streamlit
+
+ERP --> Ingestion
+POS --> Ingestion
+Marketing --> Ingestion
+External --> Ingestion
+
+Ingestion --> FeatureStore
+FeatureStore --> Training
+Training --> Registry
+Registry --> Inference
+
+Inference --> Streamlit
+Streamlit --> Planner
+Planner --> Streamlit : Filters & Actions
+@enduml
