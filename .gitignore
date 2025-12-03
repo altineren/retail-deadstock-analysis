@@ -1,0 +1,23 @@
+# Python / build
+__pycache__/
+*.py[cod]
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# OS / editor noise
+.DS_Store
+.idea/
+.vscode/
+
+# Streamlit/runtime artifacts
+streamlit.log
+streamlit.pid
+
+# Data/model caches (regenerate via scripts)
+data/processed_inventory.csv
+models/dead_stock_model.joblib
+models/metrics.json
