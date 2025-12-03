@@ -1,0 +1,4 @@
+  cd /Users/erenaltin/Documents/pythonMidterm
+  source .venv/bin/activate
+  python scripts/train_model.py 
+  streamlit run app.py
