@@ -30,8 +30,19 @@ def load_raw_data(path: Path) -> pd.DataFrame:
     return pd.read_csv(path, parse_dates=["Date"])
 
 
+def ensure_model_artifacts() -> None:
+    """Train the baseline model if artifacts are missing (e.g., on fresh deploy)."""
+    if MODEL_PATH.exists() and METRICS_PATH.exists():
+        return
+    with st.spinner("Training baseline model for the first run..."):
+        from scripts import train_model
+
+        train_model.main()
+
+
 @st.cache_resource(show_spinner=False)
 def load_model() -> joblib:
+    ensure_model_artifacts()
     return joblib.load(MODEL_PATH)
 
 
@@ -93,6 +104,7 @@ def main() -> None:
     else:
         raw_df = load_raw_data(DATA_PATH)
 
+    ensure_model_artifacts()
     prepared = build_dataset(raw_df)
     dataset = run_inference(prepared)
 
