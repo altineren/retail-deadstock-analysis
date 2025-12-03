@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Tuple
 
+import altair as alt
 import joblib
 import pandas as pd
 import streamlit as st
@@ -166,12 +167,74 @@ def main() -> None:
         .rename(columns={"model_probability": "avg_risk"})
     )
     st.line_chart(trend_df, x="Date", y="avg_risk", height=250)
+    st.caption("Daily average risk across the filtered inventory highlights seasonal spikes or stabilization.")
 
     st.subheader("Risk by category")
     category_pivot = (
         filtered.groupby("Category")["model_probability"].mean().sort_values()
     )
     st.bar_chart(category_pivot)
+    st.caption("Average model probability per category surfaces assortments driving the bulk of dead stock exposure.")
+
+    st.subheader("Store vs category heatmap")
+    heatmap_df = (
+        filtered.groupby(["Store ID", "Category"])["model_probability"]
+        .mean()
+        .reset_index()
+    )
+    if not heatmap_df.empty:
+        heatmap_chart = (
+            alt.Chart(heatmap_df)
+            .mark_rect()
+            .encode(
+                x=alt.X("Category:N", title="Category"),
+                y=alt.Y("Store ID:N", title="Store"),
+                color=alt.Color(
+                    "model_probability:Q",
+                    title="Avg Risk",
+                    scale=alt.Scale(scheme="reds"),
+                ),
+                tooltip=[
+                    alt.Tooltip("Store ID:N"),
+                    alt.Tooltip("Category:N"),
+                    alt.Tooltip("model_probability:Q", format=".2f", title="Avg risk"),
+                ],
+            )
+            .properties(height=240)
+        )
+        st.altair_chart(heatmap_chart, use_container_width=True)
+        st.caption(
+            "Heatmap compares average risk across store-category pairs to spot localized build-ups."
+        )
+
+    st.subheader("Inventory vs. risk scatter")
+    scatter_df = filtered.copy()
+    if not scatter_df.empty:
+        scatter_chart = (
+            alt.Chart(scatter_df.sample(min(len(scatter_df), 1000)))
+            .mark_circle(opacity=0.7)
+            .encode(
+                x=alt.X("Inventory Level:Q", title="Inventory Level"),
+                y=alt.Y(
+                    "model_probability:Q", title="Model Probability", scale=alt.Scale()
+                ),
+                size=alt.Size("Units Sold:Q", title="Units Sold (bubble size)"),
+                color=alt.Color("Category:N", title="Category"),
+                tooltip=[
+                    alt.Tooltip("Date:T"),
+                    alt.Tooltip("Store ID:N"),
+                    alt.Tooltip("Product ID:N"),
+                    alt.Tooltip("Inventory Level:Q"),
+                    alt.Tooltip("Units Sold:Q"),
+                    alt.Tooltip("model_probability:Q", format=".2f"),
+                ],
+            )
+            .properties(height=300)
+        )
+        st.altair_chart(scatter_chart, use_container_width=True)
+        st.caption(
+            "Bubble plot reveals which SKUs combine high on-hand units with elevated risk so planners can act first."
+        )
 
     st.subheader("Top risky SKUs")
     top_risky = (

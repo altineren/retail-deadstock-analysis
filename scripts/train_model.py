@@ -33,6 +33,8 @@ RAW_DATA_PATH = PROJECT_ROOT / "retail_store_inventory.csv"
 
 
 def build_pipeline() -> Pipeline:
+    """Create preprocessing + model pipeline for dead stock classification."""
+    # Define feature groups reused by the ColumnTransformer.
     numeric_features = NUMERIC_FEATURES + [
         "rolling_sales_7",
         "rolling_sales_30",
@@ -82,17 +84,24 @@ def build_pipeline() -> Pipeline:
         n_jobs=-1,
     )
 
-    model = Pipeline(steps=[("preprocessor", preprocessor), ("classifier", classifier)])
+    # Compose preprocessing and classifier into a single pipeline so we can persist it.
+    model = Pipeline(
+        steps=[("preprocessor", preprocessor), ("classifier", classifier)]
+    )
     return model
 
 
 def main() -> None:
+    """Load data, train the pipeline, evaluate, and persist artifacts/metrics."""
+    # Prepare dataset with engineered features and chronological split.
     prepared = prepare_dataset(RAW_DATA_PATH)
     X_train, X_test, y_train, y_test = train_test_split(prepared, test_size=0.2)
 
+    # Train the model.
     pipeline = build_pipeline()
     pipeline.fit(X_train, y_train)
 
+    # Evaluate on holdout.
     y_pred = pipeline.predict(X_test)
     y_proba = pipeline.predict_proba(X_test)[:, 1]
 
@@ -100,6 +109,7 @@ def main() -> None:
     roc_auc = roc_auc_score(y_test, y_proba)
     metrics["roc_auc"] = roc_auc
 
+    # Persist artifacts for the Streamlit app / future inference.
     MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(pipeline, MODEL_PATH)
     with open(METRICS_PATH, "w", encoding="utf-8") as f:
